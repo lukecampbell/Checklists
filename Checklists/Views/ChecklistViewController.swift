@@ -22,13 +22,9 @@ class ChecklistViewController: UITableViewController, AddItemViewControllerDeleg
 
     required init?(coder aDecoder: NSCoder) {
         items = [CheckListItem]()
-        items.append(CheckListItem("Walk the Dog"))
-        items.append(CheckListItem("Brush my teeth", withChecked: true))
-        items.append(CheckListItem("Learn iOS Development", withChecked: true))
-        items.append(CheckListItem("Soccer practice"))
-        items.append(CheckListItem("Eat ice cream", withChecked: true))
-
         super.init(coder: aDecoder)
+
+        loadChecklistItems()
     }
 
     //------------------------------------------------------------
@@ -56,6 +52,7 @@ class ChecklistViewController: UITableViewController, AddItemViewControllerDeleg
             let item = items[indexPath.row]
             item.toggleChecked()
             configureCheckMark(for: cell, with: item)
+            saveChecklistItems()
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -64,6 +61,7 @@ class ChecklistViewController: UITableViewController, AddItemViewControllerDeleg
         if editingStyle == .delete {
             items.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic)
+            saveChecklistItems()
         }
     }
 
@@ -140,6 +138,48 @@ class ChecklistViewController: UITableViewController, AddItemViewControllerDeleg
     }
 
     //------------------------------------------------------------
+    // MARK: Persistence
+    //------------------------------------------------------------
+
+    /**
+        Returns the URL for the Documents directory
+    */
+    func documentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0]
+    }
+
+    /**
+        Returns the URL for Documents/Checklists.plist
+    */
+    func dataFilePath() -> URL {
+        return documentsDirectory().appendingPathComponent("Checklists.plist")
+    }
+
+    /**
+        Sets items to the decoded contents of Documents/Checklists.plist
+    */
+    func loadChecklistItems() {
+        let path = dataFilePath()
+        if let data = try? Data(contentsOf: path) {
+            let unarchiver = NSKeyedUnarchiver(forReadingWith: data)
+            items = unarchiver.decodeObject(forKey: "ChecklistItems") as! [CheckListItem]
+            unarchiver.finishDecoding()
+        }
+    }
+
+    /**
+        Writes the encoded value of items to Documents/Checklists.plist
+    */
+    func saveChecklistItems() {
+        let data = NSMutableData()
+        let archiver = NSKeyedArchiver(forWritingWith: data)
+        archiver.encode(items, forKey: "ChecklistItems")
+        archiver.finishEncoding()
+        data.write(to: dataFilePath(), atomically: true)
+    }
+
+    //------------------------------------------------------------
     // MARK: Segue Management
     //------------------------------------------------------------
     
@@ -189,11 +229,13 @@ class ChecklistViewController: UITableViewController, AddItemViewControllerDeleg
     func addItemViewController(_ controller: AddItemViewController, didFinishAdding item: CheckListItem) {
         controller.dismiss(animated: true)
         addItem(item)
+        saveChecklistItems()
     }
 
     func addItemViewController(_ controller: AddItemViewController, didFinishEditing item: CheckListItem) {
         controller.dismiss(animated: true)
         updateItem(item)
+        saveChecklistItems()
     }
     
 }

@@ -45,6 +45,6 @@ class CheckListItem: NSObject, NSCoding {
     
     func encode(with aCoder: NSCoder) {
         aCoder.encode(text, forKey: "text")
-        aCoder.encode(checked, forKey: "text")
+        aCoder.encode(checked, forKey: "checked")
     }
 }
