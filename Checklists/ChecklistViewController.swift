@@ -9,6 +9,10 @@
 import UIKit
 
 class ChecklistViewController: UITableViewController {
+    enum tags: Int {
+        case cellLabel = 1000
+        case checkMark = 1001
+    }
 
     var items: [ChecklistItem]
 
@@ -25,17 +29,10 @@ class ChecklistViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem()
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
     // MARK: - Table view data source
@@ -64,13 +61,39 @@ class ChecklistViewController: UITableViewController {
         }
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            items.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        }
+    }
+    
+
     func configureText(for cell: UITableViewCell, with item: ChecklistItem) {
-        let label = cell.viewWithTag(1000) as! UILabel
+        let label = cell.viewWithTag(tags.cellLabel.rawValue) as! UILabel
         label.text = item.text
     }
 
     func configureCheckMark(for cell: UITableViewCell, with item: ChecklistItem) {
-        cell.accessoryType = item.checked ? .checkmark : .none
+        let checkMark = cell.viewWithTag(tags.checkMark.rawValue) as! UILabel;
+        if (item.checked) {
+            checkMark.text = "✓"
+        } else {
+            checkMark.text = ""
+        }
+    }
+
+    /*****************************************
+     * Actions
+     *****************************************/
+    
+    @IBAction func addItem(_ sender: Any) {
+        let item = ChecklistItem("I am a new role")
+        let newRowIndex = items.count
+        items.append(item)
+        let indexPath = IndexPath(row: newRowIndex, section: 0)
+        tableView.insertRows(at: [indexPath], with: .automatic)
     }
 
 }
