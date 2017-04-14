@@ -8,34 +8,32 @@
 
 import UIKit
 
-class ChecklistViewController: UITableViewController {
+class ChecklistViewController: UITableViewController, AddItemViewControllerDelegate {
+
+    //------------------------------------------------------------
+    // MARK: Properties
+    //------------------------------------------------------------
     enum tags: Int {
         case cellLabel = 1000
         case checkMark = 1001
     }
 
-    var items: [ChecklistItem]
+    var items: [CheckListItem]
 
     required init?(coder aDecoder: NSCoder) {
-        items = [ChecklistItem]()
-        items.append(ChecklistItem("Walk the Dog"))
-        items.append(ChecklistItem("Brush my teeth", withChecked: true))
-        items.append(ChecklistItem("Learn iOS Development", withChecked: true))
-        items.append(ChecklistItem("Soccer practice"))
-        items.append(ChecklistItem("Eat ice cream", withChecked: true))
+        items = [CheckListItem]()
+        items.append(CheckListItem("Walk the Dog"))
+        items.append(CheckListItem("Brush my teeth", withChecked: true))
+        items.append(CheckListItem("Learn iOS Development", withChecked: true))
+        items.append(CheckListItem("Soccer practice"))
+        items.append(CheckListItem("Eat ice cream", withChecked: true))
 
         super.init(coder: aDecoder)
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-    }
-
-    // MARK: - Table view data source
+    //------------------------------------------------------------
+    // MARK: UITableViewController overrides
+    //------------------------------------------------------------
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
@@ -46,7 +44,7 @@ class ChecklistViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ChecklistItem", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CheckListItem", for: indexPath)
         let item = items[indexPath.row]
         configureText(for: cell, with: item)
         configureCheckMark(for: cell, with: item)
@@ -68,14 +66,29 @@ class ChecklistViewController: UITableViewController {
             tableView.deleteRows(at: [indexPath], with: .automatic)
         }
     }
-    
 
-    func configureText(for cell: UITableViewCell, with item: ChecklistItem) {
+    //------------------------------------------------------------
+    // MARK: Rendering Cells
+    //------------------------------------------------------------
+
+    /**
+        Updates the cell's label with the text from the item.
+
+        - Parameter cell: The cell to update
+        - Parameter item: The item to update from
+    */
+    func configureText(for cell: UITableViewCell, with item: CheckListItem) {
         let label = cell.viewWithTag(tags.cellLabel.rawValue) as! UILabel
         label.text = item.text
     }
 
-    func configureCheckMark(for cell: UITableViewCell, with item: ChecklistItem) {
+    /**
+        Updates the cell's check mark based on the item's checked property.
+
+        - Parameter cell: The cell to update
+        - Parameter item: The item to update from
+    */
+    func configureCheckMark(for cell: UITableViewCell, with item: CheckListItem) {
         let checkMark = cell.viewWithTag(tags.checkMark.rawValue) as! UILabel;
         if (item.checked) {
             checkMark.text = "✓"
@@ -84,16 +97,103 @@ class ChecklistViewController: UITableViewController {
         }
     }
 
-    /*****************************************
-     * Actions
-     *****************************************/
-    
-    @IBAction func addItem(_ sender: Any) {
-        let item = ChecklistItem("I am a new role")
+    //------------------------------------------------------------
+    // MARK: Updating Items
+    //------------------------------------------------------------
+
+    /**
+        Adds an item to items and inserts a cell with the contents for that item.
+        
+        - Parameter item: Item to add
+     */
+    func addItem(_ item: CheckListItem) {
         let newRowIndex = items.count
         items.append(item)
         let indexPath = IndexPath(row: newRowIndex, section: 0)
         tableView.insertRows(at: [indexPath], with: .automatic)
     }
 
+    /**
+        Updates an existing item and updates the cell's contents for that item.
+
+        - Parameter item: Item to update
+    */
+     
+    func updateItem(_ item: CheckListItem) {
+        if let index = items.index(of: item) {
+            updateCell(at: IndexPath(row: index, section: 0))
+        }
+    }
+
+
+    /**
+        Updates the cell's contents with the values from the item matching the index of the cell.
+
+        - Parameter index: The index of the cell to update
+    */
+    func updateCell(at index: IndexPath) {
+        let item = items[index.row]
+        if let cell = tableView.cellForRow(at: index) {
+            configureText(for: cell, with: item)
+            configureCheckMark(for: cell, with: item)
+        }
+    }
+
+    //------------------------------------------------------------
+    // MARK: Segue Management
+    //------------------------------------------------------------
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "segueAddItem" {
+            prepareAddSegue(segue)
+        } else if segue.identifier == "segueEditItem" {
+            prepareEditSegue(segue, cell: sender as! UITableViewCell)
+        }
+    }
+
+    /**
+        Sets self as the delegate for the destination UINavigationController>
+
+        - Parameter segue: The segue
+    */
+    func prepareAddSegue(_ segue: UIStoryboardSegue) {
+        let navigationController = segue.destination as! UINavigationController
+        let controller = navigationController.topViewController as! AddItemViewController
+        controller.delegate = self
+    }
+
+    /**
+        Sets self as the delegate for the destination UINavigationController
+        and sets itemToEdit of the AddItemViewController to the item in the cell.
+
+        - Parameter segue: The segue
+        - Parameter cell: The instance of the cell being edited
+    */
+    func prepareEditSegue(_ segue: UIStoryboardSegue, cell: UITableViewCell) {
+        let navigationController = segue.destination as! UINavigationController
+        let controller = navigationController.topViewController as! AddItemViewController
+        if let indexPath = tableView.indexPath(for: cell) {
+            controller.itemToEdit = items[indexPath.row]
+        }
+        controller.delegate = self
+    }
+
+    //------------------------------------------------------------
+    // MARK: AddItemViewControllerDelegate Protocol Implementation
+    //------------------------------------------------------------
+
+    func addItemViewControllerDidCancel(_ controller: AddItemViewController) {
+        controller.dismiss(animated: true)
+    }
+
+    func addItemViewController(_ controller: AddItemViewController, didFinishAdding item: CheckListItem) {
+        controller.dismiss(animated: true)
+        addItem(item)
+    }
+
+    func addItemViewController(_ controller: AddItemViewController, didFinishEditing item: CheckListItem) {
+        controller.dismiss(animated: true)
+        updateItem(item)
+    }
+    
 }

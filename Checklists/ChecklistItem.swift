@@ -1,5 +1,5 @@
 //
-//  ChecklistItem.swift
+//  CheckListItem.swift
 //  Checklists
 //
 //  Created by Lucas Campbell on 4/6/17.
@@ -8,23 +8,26 @@
 
 import Foundation
 
-class ChecklistItem {
+class CheckListItem: NSObject {
     var text = ""
     var checked = false
 
-    init() {
+    override init() {
         text = ""
         checked = false
+        super.init()
     }
 
     init(_ text: String) {
         self.text = text
         checked = false
+        super.init()
     }
 
     init(_ text: String, withChecked: Bool) {
         self.text = text
         checked = withChecked
+        super.init()
     }
 
     func toggleChecked() {
