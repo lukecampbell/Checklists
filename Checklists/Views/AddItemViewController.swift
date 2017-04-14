@@ -3,7 +3,8 @@
 //  Checklists
 //
 //  Created by Lucas Campbell on 4/6/17.
-//  Copyright © 2017 Lucas Campbell. All rights reserved.
+//  Copyright © 2017 Lucas Campbell
+//  See LICENSE for details
 //
 
 import UIKit
